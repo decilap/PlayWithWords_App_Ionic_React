@@ -1,0 +1,7 @@
+{
+  "name": "play-with-word-react",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react"
+}
