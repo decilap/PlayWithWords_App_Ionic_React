@@ -1,55 +1,91 @@
-
-.page {
-    background: url("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT_OAYtduooyaq-05Y0dF8BfnGgc4ThrTlbLA&usqp=CAU") 0 0/100% 100% no-repeat;
-}
-
-.button span {
-    position: absolute;
-}
-
-.container {
-    margin: auto;
-    top: 20%;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 170px;
-    height: 200px;
-}
-
-.sun {
-    width: 64px;
-    height: 64px;
-    left: 55px;
-    bottom: 160px;
-    background: linear-gradient(180deg, #ffdc2a 0%, #fb2182 41.54%);
-    box-shadow: 0px 0px 36px #ffdc2a;
-    z-index: 2;
-    border-radius: 65px;
-    transition: all 1s ease-in-out;
-}
-
-.button {
-    width: 171px;
-    height: 65px;
-    background: #2c0055;
-    box-shadow: 0px 0px 16px #4a334c;
-    border-radius: 2px;
-    z-index: 3;
-    border: 2px solid;
-    transition: all 1s ease-in-out;
-    border-image: linear-gradient(#360154, #d442d5) 30;
-}
-
-span {
+.keyboard {
     text-align: center;
-    font-family: "Sacramento", cursive;
-    left: 45px;
-    font-size: 35px;
-    line-height: 70px;
-    margin: 0 auto;
-    transition: all 0.3s ease-in-out;
-    background: -webkit-linear-gradient(#ffdc2a, #fb2182);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    font-size: 14px;
+    font-family: sans-serif;
+    display: flex;
+    flex-direction: column;
 }
+
+.keyboard__row {
+    display: flex;
+    justify-content: space-between;
+    height: 3em;
+    flex-wrap: wrap;
+//margin: 0.2em;
+    margin-bottom: 10px;
+}
+
+
+.bottom{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.bottom .center{
+    width: 60%;
+}
+
+
+.keyboard__row > * {
+    position: relative;
+    background: #333;
+    text-align: center;
+    color: #eee;
+    border-radius: 0.3em;
+    height: 100%;
+    box-sizing: border-box;
+    cursor: pointer;
+    -webkit-user-select: none;
+    box-shadow: 0 0.1em 0 0.02em #222;
+    border-bottom-color: #555;
+}
+
+.keyboard__row > div[data-pressed],
+.keyboard__row > div:active {
+    background: #2a2a2a;
+    color: #aaa;
+    position: relative;
+    top: 0.2em;
+    box-shadow: 0 0 0 0.05em black;
+}
+
+.key--letter {
+    font-size: 0.8em;
+    line-height: 2.8em;
+    width: 32px;
+}
+
+.key--double > * {
+    padding-top: 0.1em;
+}
+
+.key--double  {
+    width: 71px;
+    margin: 0.1em;
+}
+
+.keyboard > .keyboard__row {
+    text-align: center;
+}
+
+.answer{
+    font-size: 26px;
+    text-align: center;
+    box-shadow: 0 4px rgba(206, 23, 23, 0.2);
+    background-color: #363e31;
+}
+
+
+.active{
+    border: 3px solid #73adff;
+    z-index: 2;
+}
+
+
+
+ionCol{
+    z-index: 1;
+}
+

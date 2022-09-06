@@ -4,7 +4,7 @@ export class Game{
   numberOfTries: number = 0;
   incorrectLetter:Array<string> = [];
   correctLetter:Array<string> = [];
-  chosenWinner:string;
+  chosenWinner:string = '';
 
   constructor(game:any){
     Object.assign(this, game)

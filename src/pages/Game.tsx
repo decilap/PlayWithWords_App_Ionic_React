@@ -6,13 +6,20 @@ import {
     IonPage,
     IonRow,
     IonTitle,
-    IonToolbar
+    IonToolbar, useIonModal, useIonToast
 } from '@ionic/react';
-import './Home.css';
+import './Game.css';
 import './Screen.css';
-import React, { useContext, useEffect } from "react";
+import React, {useContext, useEffect, useState} from "react";
 import {AppContext} from "../context/State";
 import {countLetter, countLettersInArray, getClassNames} from "../utils/Utils";
+import {RouteComponentProps, withRouter} from "react-router";
+import Swal from 'sweetalert2';
+import {decrypt, getListWords, getRandomWord} from "../services/app-service";
+import {getItemFromLocalStorage, updateStorage} from "../services/LocaStorageService";
+import {Game} from "../models/stat";
+import {SettingModal} from "../modal/SettingModal";
+import {OverlayEventDetail} from "@ionic/react/dist/types/components/react-component-lib/interfaces";
 
 const Button =  (props:any) => {
     const { state, dispatch } = useContext(AppContext);
@@ -42,7 +49,7 @@ const Letter =  (props:any) => {
                         <IonCol key={indexCol} className="screen">
                             <section className="stage" id={col.class}>
                                 <figure className={`ball ${col.class +' '+ getClassNames({
-                                    active:currentCol == indexCol + 1 && currentRow == indexRow
+                                    active:currentCol == indexCol && currentRow == indexRow
                                     })}`}>
                                     <span className="shadow"/>
                                     <div className={`${col.active == true ? 'text ' : ''}`}>
@@ -71,9 +78,8 @@ const Buttons =  (props:any) => {
                 status: 'default'
             };
             dispatch({ type: "updateProperty", data: {
-                rows: rows,
-                currentCol: currentCol
-            }});
+                       rows: rows,
+                       currentCol: currentCol }});
         }
     }
     return (
@@ -86,7 +92,7 @@ const Buttons =  (props:any) => {
                 <div className="keyboard__row">
                     <IonButton onClick={(e) => props.onSubmit(e)} className="key--double key--letter" disabled={finishedGame} color="primary">Enter</IonButton>
                 </div>
-                <Button className="center" finishedGame={finishedGame} alphabets={layouts[currentLayout].layoutBottom}/>
+                <Button className="center" loadLetters={props.loadLetters} finishedGame={finishedGame} alphabets={layouts[currentLayout].layoutBottom}/>
                 <div className="keyboard__row">
                     <IonButton onClick={(e) => letterDeleted(e)} className="key--double key--letter" disabled={finishedGame} color="primary">Delete</IonButton>
                 </div>
@@ -95,16 +101,81 @@ const Buttons =  (props:any) => {
     )
 }
 
-const Home: React.FC = () => {
+
+const Modal = (props:any) => {
+
+    useEffect(() => {
+        console.log('ok')
+    }, []);
+
+
+    const [present, dismiss] = useIonModal(SettingModal, {
+        onDismiss: (data: string, role: string) => dismiss(data, role),
+    });
+    const [message, setMessage] = useState('This modal example uses the modalController to present and dismiss modals.');
+
+    const openModal = () => {
+        present({
+            onWillDismiss: (ev: CustomEvent<OverlayEventDetail>) => {
+                if (ev.detail.role === 'confirm') {
+                    setMessage(`Hello, ${ev.detail.data}!`);
+                }
+            },
+        });
+    }
+
+    return (
+        <>
+            <IonButton expand="block" onClick={() => openModal()}>
+                Open {message}
+            </IonButton>
+        </>
+    );
+
+}
+
+
+const Home: React.FC<RouteComponentProps> = ({history}) => {
     const {state, dispatch} = useContext(AppContext);
-    let {rows, currentCol, rowCount, currentRow, colCount, classes, chosenWord} = state;
+    const [chosenWord, setChosenWord] = useState('');
 
-    useEffect(() => { build(); }, []);
+    let {rows, currentCol, rowCount, currentRow, colCount, classes, isIndice, config} = state;
 
-    const build = () => {
+    const [present] = useIonToast();
+
+    useEffect(() => {
+        init()
+    }, []);
+
+    const init = async () => {
+        const configStorage = await getItemFromLocalStorage('configKey');
+
+        const playingPadActive = configStorage.padSound;
+        const playingMusicActive = configStorage.music;
+        const rowCount = configStorage.rowNumber === 0 ? 5 : 2;
+        const colCount = configStorage.colNumber === 0 ? 5 : configStorage.colNumber === 1 ? 6 :
+            configStorage.colNumber === 2 ? 7 : 8;
+
+        dispatch({type: "updateProperty", data: {
+                rowCount: rowCount,
+                colCount: colCount
+            }});
+
+
+        build();
+
+        //setStat(new Stat({}))
+       // this.playSound(this.playlist[1], this.playingMusicActive);
+
+    }
+    const build = async () => {
         let rows = [];
-        //dispatch({ type: "updateProperty", data:{ chosenWord: 'TOTO' }});
-        for (let row = 0; row < state.rowCount; row++) {
+        let chosenWord = decrypt(
+            (await getItemFromLocalStorage('statKey')).goalWord,
+            "denis");
+        console.log("store ", chosenWord)
+        setChosenWord(chosenWord);
+        for (let row = 0; row < rowCount; row++) {
             let cols = [];
             for (let col = 0; col < state.colCount; col++) {
                 cols.push({
@@ -116,7 +187,8 @@ const Home: React.FC = () => {
             }
             rows.push(cols);
         }
-        dispatch({type: "updateProperty", data: {rows: rows}});
+
+        dispatch({type: "updateProperty", data: {rows: rows, chosenWord: chosenWord}});
     }
     const findCorrectStatus = (tabLetters: any, letter: string) => {
         return rows.filter((col: any) => col.status === 'correct' && col.letter === letter);
@@ -186,89 +258,154 @@ const Home: React.FC = () => {
             }
         }
     }
-    const wordSubmitted = (event: any) => {
-        let answersMap = rows.map((row: any) => row.letter);
-
-        //let words:any = await this.appService.getListWords(this.colCount);
-
-        if (!(currentCol < currentCol)/* && (!this.game.winner && !this.loser))*/) {
-            /* if (this.isIndice || words.includes(answersMap.join(''))){
-                 this.isIndice ? this.isIndice = !this.isIndice : '';*/
-            addClassSuccessLetter();
-            addClassWarnningLetter();
-
+    const presentToastError = (message:string, position: any, color:string) => {
+        present({
+            message: message,
+            duration: 1500,
+            position: position,
+            color: color
+        });
+    };
+    const presentSwallInfo = (message:string, icon:any) => {
+       return  Swal.fire({
+            title: 'GAME <b>WINNER</b>',
+            icon: icon,
+            heightAuto: false,
+            html: message,
+            showCloseButton: true,
+            showCancelButton: true,
+            focusConfirm: false,
+            confirmButtonText:
+                'Continue',
+            confirmButtonAriaLabel: 'Thumbs up, great!',
+            cancelButtonText:
+                'Quitter',
+            cancelButtonAriaLabel: 'Thumbs down'
+        })
+    }
+    const updateChoice = async (message:string, icon:string) => {
+        const {value} = await presentSwallInfo(message, icon);
+        if (value) {
+            let chosenWordEncrypt = await getRandomWord(colCount);
             dispatch({
                 type: "updateProperty", data: {
-                    rows: rows
+                    currentCol: 0,
+                    currentRow: 0,
+                    game: new Game({})
                 }
             });
-
-            /*  dispatch({ type: "updateProperty", data: {
-                      row: ++currentRow }});*/
-            if (chosenWord === answersMap.join('')) {
-
-                // this.playSound(this.playlist[1], this.playingMusicActive);
-                //this.openModal("Youpii vous avez gagné 😀 ");
-                // this.game.chosenWinner = this.chosenWord;
-                //this.appService.disabledButton(true);
-                // this.score++;
-                // this.game.numberOfTries = this.score;
-                // this.game.winner = true;
-                // this.localStorageObject.wonGame+=1;
-                // this.localStorageObject.stats.push(this.game);
-                //this.localStorageObject.goalWord = await this.appService.getRandomWord();
-            } else {
-                if (currentRow < rowCount - 1) {
-                    dispatch({
-                        type: "updateProperty", data: {
-                            currentRow: ++currentRow,
-                            currentCol: 0
-                        }
-                    });
-                    //  this.currentRow = ++this.currentRow;
-                    //  this.currentCol = 0;
-                    //  this.score++;
-                    //  this.game.numberOfTries = this.score;
-                } else {
-                    //  this.playSound(this.playlist[0], this.playingMusicActive);
-                    //  //this.appService.disabledButton(true);
-                    //  this.loser = true;
-                    //  this.openModal("Game Over 😥 ");
-                    //  this.score++;
-                    //  this.game.numberOfTries = this.score;
-                    //  this.localStorageObject.stats.push(this.game);
-                }
-            }
-
+            let chosenWord = decrypt(chosenWordEncrypt, 'denis');
+            await updateStorage('statKey', {goalWord: chosenWordEncrypt});
+            build();
         } else {
-            //  return await this.loadToast("Le mot n'existe pas !", "top", "primary");
+            history.goBack();
         }
-        /*  }else{
-              //return await this.loadToast("Le mot doit contenir " + this.colCount + " lettres !", "top", "primary");
-          }*/
-        // this.localStorage.setItemIntoLocalStorage(environment.statKey, this.localStorageObject);
+    }
+    const wordSubmitted = async (event: any) => {
+        let answersMap = rows[currentRow].map((row: any) => row.letter);
+        let words:any = await getListWords(state.colCount);
 
+        if (!(currentCol < colCount)) {
+            if (isIndice || words.includes(answersMap.join(''))) {
+                isIndice = (() => !isIndice)();
+                addClassSuccessLetter();
+                addClassWarnningLetter();
+                dispatch({ type: "updateProperty", data: { rows: rows }});
 
+                if (chosenWord === answersMap.join('')) {
+                    await updateChoice('Vous avez gagner', 'success');
+                    // this.playSound(this.playlist[1], this.playingMusicActive);
+                    // this.game.chosenWinner = this.chosenWord;
+                    //this.appService.disabledButton(true);
+                    // this.score++;
+                    // this.game.numberOfTries = this.score;
+                    // this.game.winner = true;
+                    // this.localStorageObject.wonGame+=1;
+                    // this.localStorageObject.stats.push(this.game);
+                    //this.localStorageObject.goalWord = await this.appService.getRandomWord();
+                } else {
+                    if (currentRow < rowCount - 1) {
+                        dispatch({  type: "updateProperty", data: {
+                                    currentRow: ++currentRow,
+                                    currentCol: 0 }});
+                        //  this.currentRow = ++this.currentRow;
+                        //  this.currentCol = 0;
+                        //  this.score++;
+                        //  this.game.numberOfTries = this.score;
+                    } else {
+                        //  this.playSound(this.playlist[0], this.playingMusicActive);
+                        //  //this.appService.disabledButton(true);
+                        //  this.loser = true;
+                        await updateChoice('Vous avez perdu', 'error');
+                        //  this.score++;
+                        //  this.game.numberOfTries = this.score;
+                        //  this.localStorageObject.stats.push(this.game);
+                    }
+                }
+            } else {
+                    presentToastError("Le mot n'existe pas !", "top", "danger");
+            }
+        } else {
+            presentToastError("Le mot doit contenir " + colCount + " lettres !", "top", "danger");
+        }
+    }
+    const randomNumshuffle = (a:Array<any>) => {
+        for (let i = a.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+    }
+
+    const indice = (event:any) => {
+        console.log("store ", chosenWord)
+        if(!isIndice){
+            isIndice = true;
+            let alphabetLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+            let usedNums = chosenWord.split('');
+            let usedNumsRandom = randomNumshuffle(usedNums).slice(-2);
+            let alphabetLettersSliceCount = colCount === 5 ? -3 :
+                colCount === 6 ? -4 :
+                colCount === 6 ? -4 :
+                colCount === 7 ? -5 : -6;
+            let alphabetLettersRandom = randomNumshuffle(alphabetLetters).splice(alphabetLettersSliceCount);
+            let mergeLetters = usedNumsRandom.concat(alphabetLettersRandom);
+            let promesse = new Promise<void>((resolve, reject) => {
+                randomNumshuffle(mergeLetters).forEach((letter:string, index:number) => {
+                    //setTimeout(() => {
+                        rows[currentRow][index] = {
+                            letter: letter,
+                            active: true,
+                            class: classes.default,
+                            status: ''
+                        };
+                        currentCol = index + 1;
+                        if(index === mergeLetters.length - 1){  resolve(); }
+                   // }, 100 * (index + 1));
+                });
+            });
+
+            promesse.then(() => {
+                wordSubmitted(null);
+            });
+        }
     }
 
     return (
             <IonPage>
                 <IonHeader>
                     <IonToolbar>
-                        <IonTitle>Blank</IonTitle>
+                        <IonTitle>Le Mot</IonTitle>
                     </IonToolbar>
                 </IonHeader>
                 <IonContent fullscreen>
-                    <IonHeader collapse="condense">
-                        <IonToolbar>
-                            <IonTitle size="large">Blank</IonTitle>
-                        </IonToolbar>
-                    </IonHeader>
                     <Letter {...state}/>
                     <Buttons {...state} loadLetters={loadLetters} onSubmit={wordSubmitted}/>
+                    <p onClick={(e) => indice(e)}>tst</p>
+                    <Modal/>
                 </IonContent>
             </IonPage>
     );
 }
 
-export default Home;
+export default withRouter(Home) ;

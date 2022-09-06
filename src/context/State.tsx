@@ -1,12 +1,16 @@
 import React, {createContext, useEffect, useReducer} from "react";
 import reducer, {initialState} from "../reducers/reducer";
 import Config from "../model/Config";
+import {Stat} from "../models/stat";
+import Game from "../pages/Game";
+import {AppConfig} from "../models/app-config";
 
 localStorage.setItem("app", JSON.stringify(new Config({})));
 
 const persistedState = localStorage.getItem("app")
     ? JSON.parse(window.localStorage["app"])
     : new Config({});
+
 
 
 const pads = {
@@ -33,12 +37,15 @@ const appState = {
     rows: [],
     rowCount: 5,
     colCount: 5,
-    chosenWord: 'AZERT',
     letter: '',
     currentLayout: 0,
     currentCol: 0,
     currentRow: 0,
     finishedGame: false,
+    isIndice: false,
+    config: new AppConfig({}),
+    stat: new Stat({}),
+    game: new Game({}),
     classes: {
         default: 'default',
         success: 'success',
@@ -50,7 +57,7 @@ const appState = {
 let AppContext = createContext(initialState as any);
 
 
-const AppContextProvider = (props:any) => {
+const AppContextProvider =  (props: any) => {
     const fullInitialState = {
         ...initialState,
         ...persistedState,
@@ -59,7 +66,7 @@ const AppContextProvider = (props:any) => {
     };
 
     let [state, dispatch] = useReducer(reducer, fullInitialState);
-    let value = { state, dispatch };
+    let value = {state, dispatch};
 
     useEffect(() => {
         window.localStorage["app"] = JSON.stringify({

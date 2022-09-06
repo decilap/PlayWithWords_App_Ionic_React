@@ -1,0 +1,88 @@
+/* LETTERS */
+
+.screen{
+    display: flex;
+    justify-content: center;
+}
+
+.ball {
+    display: inline-block;
+    width: 65px;
+    height: 65px;
+    margin: 0;
+    border-radius: 50%;
+    position: relative;
+ /*   background: radial-gradient(circle at 50% 120%, #81e8f6, #76deef 10%, #055194 80%, #062745 100%); */
+}
+.ball:before {
+    content: "";
+    position: absolute;
+    top: 1%;
+    left: 5%;
+    width: 90%;
+    height: 90%;
+    border-radius: 50%;
+    -webkit-filter: blur(5px);
+    z-index: 2;
+}
+
+.ball .shadow {
+    position: absolute;
+
+    background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.1) 40%, rgba(0, 0, 0, 0) 50%);
+    -webkit-transform: rotateX(90deg) translateZ(-150px);
+    -moz-transform: rotateX(90deg) translateZ(-150px);
+    -ms-transform: rotateX(90deg) translateZ(-150px);
+    -o-transform: rotateX(90deg) translateZ(-150px);
+    transform: rotateX(90deg) translateZ(-150px);
+    z-index: -1;
+}
+.stage {
+    display: inline-block;
+    -webkit-perspective: 1200px;
+    -moz-perspective: 1200px;
+    -ms-perspective: 1200px;
+    -o-perspective: 1200px;
+    perspective: 1200px;
+    -webkit-perspective-origin: 50% 50%;
+    -moz-perspective-origin: 50% 50%;
+    -ms-perspective-origin: 50% 50%;
+    -o-perspective-origin: 50% 50%;
+    perspective-origin: 50% 50%;
+}
+
+
+.text {
+    line-height: 60px;
+    text-align: center;
+    white-space: nowrap;
+    animation: rotate 0.5s linear;
+    backface-visibility: hidden;
+    background: radial-gradient(circle at 50% 30px, #ffffff, rgba(255, 255, 255, 0) 58%);
+}
+
+
+.ball.default{
+    background: radial-gradient(circle at 50% 120%, #81e8f6, #76deef 10%, #2b3b4c 80%, #031628 100%);
+}
+
+.ball.success{
+    background: radial-gradient(circle at 50% 120%, #a4f681, #9fef76 10%, #68f22c 80%, #56bd4d 100%);
+}
+
+.ball.warning{
+    background: radial-gradient(circle at 50% 120%, #dba336, #f4af30 10%, #e7eb31c2 80%, #b9ba5d 100%);
+}
+
+.ball.dark{
+    background: radial-gradient(circle at 50% 120%, #3a4445, #1a2526c9 10%, #051a2d 80%, #062745 100%);
+}
+
+@keyframes rotate {
+    from {
+        transform: rotateY(180deg) translateZ(30px);
+    }
+    to {
+        transform: rotateY(-0deg) translateZ(30px);
+    }
+}
